@@ -1,0 +1,28 @@
+Package: GeneBridge
+Type: Package
+Title: Rooting Orthologous Genes in Large-Scale Evolutionary Analysis
+Version: 0.99.0
+Authors@R: 
+    c(person("Leonardo", "Campos", role = "ctb"),
+      person("Rodrigo", "Dalmolin", role = "ctb"),
+      person("Mauro", "Castro", role = c("aut", "cre"),
+              email = "mauro.a.castro@gmail.com",
+              comment = c(ORCID = "0000-0003-4942-8131")))
+Depends: R (>= 4.3), methods
+Imports: snow, ape, grDevices, graphics, stats, utils, data.table
+Suggests: RUnit, BiocGenerics, BiocStyle, knitr, rmarkdown, geneplast.data, ggplot2, ggpubr, plyr
+Description: GeneBridge is designed to assess the distribution of orthologous groups in a given species tree. It implements the Bridge algorithm to determine the evolutionary root of genes in large-scale evolutionary analysis.
+License: Artistic-2.0
+biocViews: Genetics, GeneRegulation, SystemsBiology
+VignetteBuilder: knitr
+URL: https://github.com/sysbiolab/GeneBridge
+Collate:
+  AllChecks.R
+  AllClasses.R
+  AllGenerics.R
+  AllMethods.R
+  AllSupplements.R
+  AllPlots.R
+  Misc.R
+Encoding: UTF-8
+RoxygenNote: 7.2.3

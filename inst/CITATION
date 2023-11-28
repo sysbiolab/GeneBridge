@@ -1,0 +1,8 @@
+citEntry(entry = "Manual",
+  author = "Dalmolin, Rodrigo JS  and Castro, Mauro AA",
+  title = "Geneplast: evolutionary rooting and plasticity inference",
+  year = "2015",
+  note = "R package",
+  textVersion = "Dalmolin RJS, Castro MAA. Geneplast: evolutionary rooting and plasticity inference. R package, 2015."
+)
+
