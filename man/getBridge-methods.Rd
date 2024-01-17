@@ -12,8 +12,9 @@
 \item{gbr}{A preprocessed \linkS4class{Bridge} class object.}
 
 \item{what}{A single character value specifying which information should 
-be retrieved from the slots.
-Options: 'cogids', 'spbranches', 'orthoroot', 'status', 'results', 'tree'.}
+be retrieved from the slots. 
+Options: 'status', 'results', 'tree', 'ogids', 'orthoroots',
+'branches', 'roots'.}
 }
 \value{
 Content from slots in the \linkS4class{Bridge} object.
@@ -24,10 +25,10 @@ individual slots available in a Bridge object.
 }
 \examples{
 # Load datasets used for demonstration
-data(cogData)
+data(ogdata)
 
 # Create an object of class 'Bridge' for H. sapiens
-gbr <- newBridge(cogdata, phyloTree, spid="9606", cogids=cogids)
+gbr <- newBridge(ogdata, phyloTree, refsp="9606", ogids=ogids)
 
 # Get the 'status' slot in gbr
 getBridge(gbr, what = 'status')

@@ -14,20 +14,20 @@
         msg <- paste0("'", name, "' should be a numeric matrix")
         if (!is.numeric(para) || !is.matrix(para)) stop(msg, call. = FALSE)
     } else if (check == "allCharacter") {
-        msg <- paste0("'", name, "' should be a vector with strings.")
+        msg <- paste0("'", name, "' should be a vector of strings.")
         if (!.all_characterValues(para)) stop(msg, call. = FALSE)
     } else if (check == "allCharacterOrInteger") {
-        msg <- paste("'", name, "'should be a vector of strings of integers.")
+        msg <- paste("'", name, "'should be a vector of strings or integers.")
         if (! (.all_characterValues(para) | .all_integerValues(para) ) ) 
             stop(msg, call. = FALSE)
     } else if (check == "allCharacterOrNa") {
-        msg <- paste0("'", name, "' should be a vector with strings.")
+        msg <- paste0("'", name, "' should be a vector of strings.")
         if (!.all_characterValues(para, notNA=FALSE)) stop(msg, call. = FALSE)
     } else if (check == "allBinary") {
-        msg <- paste0("'", name, "' should be a vector with binary values.")
+        msg <- paste0("'", name, "' should be a vector of binary values.")
         if (!.all_binaryValues(para)) stop(msg, call. = FALSE)
     } else if (check == "allInteger") {
-        msg <- paste0("'", name, "' should be a vector with integer values.")
+        msg <- paste0("'", name, "' should be a vector of integer values.")
         if (!.all_integerValues(para)) stop(msg, call. = FALSE)
     } else if (check == "singleStringOrInteger") {
         msg <- paste0("'", name, "' should be a single string or integer.")
@@ -36,12 +36,21 @@
     } else if (check == "singleString") {
         msg <- paste0("'", name, "' should be a single string.")
         if (!.is_singleString(para)) stop(msg, call. = FALSE)
+    } else if (check == "singleStringOrNa") {
+        msg <- paste0("'", name, "' should be a single string.")
+        if (!.is_singleString(para, notNA = FALSE)) stop(msg, call. = FALSE)
     } else if (check == "singleInteger") {
         msg <- paste0("'", name, "' should be a single integer value.")
         if (!.is_singleInteger(para)) stop(msg, call. = FALSE)
+    } else if (check == "singleIntegerOrNa") {
+        msg <- paste0("'", name, "' should be a single integer value.")
+        if (!.is_singleInteger(para, notNA = FALSE)) stop(msg, call. = FALSE)
     } else if (check == "singleNumber") {
         msg <- paste0("'", name, "' should be a single numeric value.")
         if (!.is_singleNumber(para)) stop(msg, call. = FALSE)
+    } else if (check == "singleNumberOrNA") {
+        msg <- paste0("'", name, "' should be a single numeric value.")
+        if (!.is_singleNumber(para, notNA = FALSE)) stop(msg, call. = FALSE)
     } else if (check == "function") {
         msg <- paste0("'", name, "' should be a function.")
         if (!is.function(para)) stop(msg, call. = FALSE)
@@ -68,25 +77,33 @@
 
 #-------------------------------------------------------------------------------
 .validate.bridge.args <- function(name, para) {
-    if (name == "cogdata") {
+    if (name == "ogdata") {
         if ((!is.matrix(para) && !is.data.frame(para)) || ncol(para) < 3) {
-            stop("'cogdata' object should be a data frame with length >=3",
+            stop("'ogdata' object should be a data frame with length >=3",
                 call. = FALSE
             )
         }
-        clpars <- c("protein_id", "ssp_id", "cog_id")
+        clpars <- c("protein_id", "ssp_id", "og_id")
         clname <- tolower(colnames(para))
-        if (!all(clpars %in% clname)) {
-            stop("'cogdata' colnames should include: ", 
-                paste(clpars, collapse = ", "), call. = FALSE
-            )
-        }
         colnames(para) <- clname
+        if (!all(clpars %in% clname)) {
+            msg <- paste0("'ogdata' colnames should include: ",
+                paste(clpars, collapse = ", "))
+            idx <- c(grep(c("protein"), clname), grep(c("ssp"), clname), 
+                grep(c("og"), clname))
+            if(any(is.na(idx)) || length(idx)!=3){
+                stop(msg, call. = FALSE)
+            } else {
+                warning(msg, call. = FALSE)
+            }
+            colnames(para)[idx] <- clpars
+            clname <- colnames(para)
+        }
         para <- para[, c(clpars, clname[which(!clname %in% clpars)])]
         para[, 1] <- as.character(para[, 1])
         para[, 2] <- as.character(para[, 2])
         para[, 3] <- as.character(para[, 3])
-        for (i in 1:ncol(para)) {
+        for (i in seq_len(ncol(para))) {
             if (!is.numeric(para[, i]) || !is.integer(para[, i])) {
                 para[, i] <- as.character(para[, i])
             }
@@ -97,155 +114,29 @@
                 check.names = FALSE
             )
         }
-        for (i in 1:3) {
+        for (i in seq_len(3)) {
             idx <- !is.na(para[, i]) & !para[, i] == ""
             para <- para[which(idx), ]
         }
         if (nrow(para) <= 3) {
-            stop("'cogdata' has no useful data!\n", call. = FALSE)
+            stop("'ogdata' has no useful data!\n", call. = FALSE)
         }
-        return(para)
-    } else if (name == "cogids") {
-        if (is.null(para)) {
-            return(para)
-        } else {
-            b1 <- is.character(para)
-            b2 <- is.matrix(para) || is.data.frame(para)
-            if (!b1 && !b2) {
-                stop("'cogids' should be a vector of data frame.",
-                    call. = FALSE
-                )
-            }
-            if (b1) {
-                para <- unique(as.character(para))
-                para <- para[!is.na(para)]
-                para <- para[para != ""]
-                para <- sort(para)
-                para <- data.frame(cog_id = para, stringsAsFactors = FALSE, 
-                    check.names = FALSE)
-            } else {
-                clpars <- c("cog_id")
-                clname <- tolower(colnames(para))
-                if (!all(clpars %in% clname)) {
-                    stop("'cogids' colnames should include: '", clpars, "'!", 
-                        call. = FALSE)
-                }
-                colnames(para) <- clname
-                para <- para[, c(clpars, clname[which(!clname %in% clpars)]), 
-                    drop = FALSE]
-                para[, 1] <- as.character(para[, 1])
-                for (i in 1:ncol(para)) {
-                    if (!is.numeric(para[, i]) || !is.integer(para[, i])) {
-                        para[, i] <- as.character(para[, i])
-                    }
-                }
-                para <- data.frame(para, stringsAsFactors = FALSE, 
-                    check.names = FALSE)
-                uni <- unique(para[, 1])
-                uni <- uni[!is.na(uni)]
-                uni <- uni[uni != ""]
-                uni <- sort(uni)
-                para <- para[match(uni, para[, 1]), , drop = FALSE]
-            }
-            rownames(para) <- para[, 1]
-            return(para)
-        }
-    } else if (name == "sspids") {
-        if (is.null(para)) {
-            return(para)
-        } else {
-            b1 <- is.character(para) || is.integer(para) || is.numeric(para)
-            b2 <- is.matrix(para) || is.data.frame(para)
-            if (!b1 && !b2) {
-                stop("'sspids' should be a vector of characters or dataframe.",
-                    call. = FALSE
-                )
-            }
-            if (b1) {
-                para <- unique(as.character(para))
-                para <- para[!is.na(para)]
-                para <- para[para != ""]
-                para <- sort(para)
-                para <- data.frame(ssp_id = para, stringsAsFactors = FALSE)
-            } else {
-                clpars <- c("ssp_id")
-                clname <- tolower(colnames(para))
-                if (!all(clpars %in% clname)) {
-                    stop("'cogdata' colnames should include: ", 
-                        paste(clpars, collapse = ", "),
-                        call. = FALSE
-                    )
-                }
-                colnames(para) <- clname
-                para <- para[, c(clpars, clname[which(!clname %in% clpars)]), 
-                    drop = FALSE]
-                para[, 1] <- as.character(para[, 1])
-                para[, 2] <- as.character(para[, 2])
-                for (i in 1:ncol(para)) {
-                    if (!is.numeric(para[, i]) || !is.integer(para[, i])) {
-                        para[, i] <- as.character(para[, i])
-                    }
-                }
-                para <- data.frame(para, stringsAsFactors = FALSE)
-                uni <- unique(para[, 1])
-                uni <- uni[!is.na(uni)]
-                uni <- uni[uni != ""]
-                uni <- sort(uni)
-                para <- para[match(uni, para[, 1]), , drop = FALSE]
-            }
-            rownames(para) <- para[, 1]
-            return(para)
-        }
-    } else if (name == "spbranches") {
-        b1 <- is.matrix(para) || is.data.frame(para)
-        if (!b1) {
-            stop("'spbranches' should be a data.frame with spp branches.",
-                call. = FALSE
-            )
-        }
-        clpars <- c("ssp_id", "ssp_name")
-        clname <- tolower(colnames(para))
-        clNOTpars <- clname[which(!clname %in% clpars)]
-        if (!all(clpars %in% clname)) {
-            stop("'spbranches' colnames should include: ", 
-                paste(clpars, collapse = " AND "),
-                call. = FALSE
-            )
-        }
-        colnames(para) <- clname
-        para <- para[, c(clpars, clNOTpars), drop = FALSE]
-        para[, 1] <- as.character(para[, 1])
-        para[, 2] <- as.character(para[, 2])
-        for (i in 1:ncol(para)) {
-            if (!is.numeric(para[, i]) && !is.integer(para[, i])) {
-                para[, i] <- as.character(para[, i])
-            }
-        }
-        para <- data.frame(para, stringsAsFactors = FALSE, check.names = FALSE)
-        if (any(duplicated(para[, 1]))) {
-            stop("NOTE: 'spbranches' should have unique spp ids!")
-        }
-        if (any(duplicated(para[, 2]))) {
-            stop("NOTE: 'spbranches' should have unique spp names!")
-        }
-        rownames(para) <- para[, 1]
         return(para)
     } else if (name == "phyloTree") {
         if (!is(para, "phylo")) {
             stop("'phyloTree' should be an object of class 'phylo'")
         }
-    } else if (name == "penalty") {
-        .validate.args("singleNumber","penalty", para)
-        if (para <= 0) {
-            stop("'penalty' should be numeric value >0", 
-                call. = FALSE)
-        }   
-    } else if (name == "cutoff") {
-        .validate.args("singleNumber","cutoff", para)
-        if (para > 1 || para < 0) {
-            stop("'cutoff' should be numeric value >=0 and <=1", 
-                call. = FALSE)
+        if(is.null(para$tip.label)){
+            stop("'phyloTree' should have 'tip.label' names.")
         }
+        para$tip.label <- as.character(para$tip.label)
+        if(is.null(para$tip.alias)){
+            para$tip.alias <- para$tip.label
+        } else {
+            para$tip.alias <- as.character(para$tip.label)
+        }
+        para$edge.length <- NULL
+        return(para)
     } else if (name == "pAdjustMethod") {
         .validate.args("singleString","pAdjustMethod", para)
         opt <- c("holm", "hochberg", "hommel", "bonferroni", "BH", 
@@ -265,33 +156,42 @@
 }
 
 #-------------------------------------------------------------------
-.is_singleNumber <- function(para) {
-    (is.integer(para) || is.numeric(para)) &&
-        length(para) == 1L && !is.na(para)
-}
-.is_singleInteger <- function(para) {
-    lg <- (is.integer(para) || is.numeric(para)) &&
-        length(para) == 1L && !is.na(para)
-    if (lg) {
-        para <- abs(para)
-        lg <- abs(para - round(para)) <= para
-    }
+.is_singleNumber <- function(para, notNA = TRUE) {
+    lg <- length(para) == 1L && 
+        (is.integer(para) || is.numeric(para) || is.na(para))
+    if(lg && notNA) lg <- !is.na(para)
     return(lg)
 }
-.is_singleString <- function(para) {
-    is.character(para) && length(para) == 1L && !is.na(para)
+.is_singleInteger <- function(para, notNA = TRUE) {
+    lg <- length(para) == 1L && 
+        (is.integer(para) || is.numeric(para) || is.na(para))
+    if (lg && !is.na(para)) {
+        para <- abs(para)
+        lg <- (para - round(para)) == 0
+    }
+    if(lg && notNA) lg <- !is.na(para)
+    return(lg)
 }
-.is_singleLogical <- function(para) {
-    is.logical(para) && length(para) == 1L && !is.na(para)
+.is_singleString <- function(para, notNA = TRUE) {
+    lg <- length(para) == 1L && (is.character(para) || is.na(para))
+    if(lg && notNA) lg <- !is.na(para)
+    return(lg)
 }
-.all_binaryValues <- function(para) {
-    all(para %in% c(0, 1, NA))
+.is_singleLogical <- function(para, notNA = TRUE) {
+    lg <- length(para) == 1L && (is.logical(para) || is.na(para))
+    if(lg && notNA) lg <- !is.na(para)
+    return(lg)
+}
+.all_binaryValues <- function(para, notNA = TRUE) {
+    lg <- all(para %in% c(0, 1, NA))
+    if(lg && notNA) lg <- !any(is.na(para))
+    return(lg)
 }
 .all_integerValues <- function(para, notNA = TRUE) {
     lg <- is.integer(para) || is.numeric(para) || all(is.na(para))
     if (lg) {
         para <- abs(para)
-        lg <- all(abs(para - round(para)) <= para, na.rm=TRUE)
+        lg <- all( (para - round(para)) == 0, na.rm=TRUE)
     }
     if(lg && notNA) lg <- !any(is.na(para))
     return(lg)

@@ -6,87 +6,61 @@
 \alias{runBridge}
 \title{Run gene root inference with the Bridge algorithm}
 \usage{
-\S4method{runBridge}{Bridge}(
-  gbr,
-  penalty = 2,
-  cutoff = 0.3,
-  nPermutations = 1000,
-  pAdjustMethod = "bonferroni",
-  verbose = TRUE
-)
+\S4method{runBridge}{Bridge}(gbr, penalty = 2, threshold = 0.5, verbose = TRUE)
 }
 \arguments{
 \item{gbr}{A preprocessed \linkS4class{Bridge} class object.}
 
-\item{penalty}{A single number specifying the penalty used in the 
+\item{penalty}{A single number (>0) specifying the penalty used in the 
 rooting algorithm (see details).}
 
-\item{cutoff}{A single number in [0,1] specifying the cutoff used in the 
-BR statistics (see details).}
-
-\item{nPermutations}{A single integer specifying the number of permutations
-used to compute a null distribution for the inferred roots 
-in the species tree.}
-
-\item{pAdjustMethod}{A single string value specifying the p-value 
-adjustment method to be used (see 'p.adjust' for details).}
+\item{threshold}{A single number in `[0,1)`, specifying a local threshold 
+used in the Bridge algorithm (see details).}
 
 \item{verbose}{A single logical value specifying to display detailed 
 messages (when \code{verbose=TRUE}) or not (when \code{verbose=FALSE}).}
 }
 \value{
 A preprocessed \linkS4class{Bridge} class object, including 
-results from the rooting algorithm.
+results from the Bridge algorithm.
 }
 \description{
 The \code{runBridge} function assesses the 
 evolutionary root of a gene based on the distribution of its orthologs.
 }
 \details{
-The 'runBridge' function addresses the problem of finding the evolutionary 
+The 'Bridge' algorithm addresses the problem of finding the evolutionary 
 root of a feature in an phylogenetic tree. The method infers the probability
 that such feature was present in the Last Common Ancestor (LCA) of a given 
 lineage. Events like horizontal gene transfer, gene deletion, and de novo 
 gene formation add noise to vertical heritage patterns. The 'runBridge' 
-function assesses the presence and absence of the orthologs in the extant
-species of the phylogenetic tree in order to build a probability 
+function assesses the presence and absence of orthologs in the extant
+species of a phylogenetic tree in order to build a probability 
 distribution, which is used to identify vertical heritage patterns.
 
 The 'penalty' argument weighs gene gain and loss; penalty=1 indicates equal 
 probability; penalty > 1 indicates higher probability of gene loss while 
 penalty < 1 indicates higher probability of gene gain (penalty value should
-be greater than zero; default penalty=2). 
+be greater than zero; default \code{penalty = 2}).
 
-After the probability distribution is built for a given lineage, then a 
-rooting algorithm is used to search the LCA that provides the best vertical 
-heritage pattern. The rooting algorithms finds the 
-optimum point that splits the probability distribution into two 
-components: one enriched with the queried feature (supporting vertical 
-heritage in the lineage) and another with low evidence in favour of the 
-feature's presence. The cutoff sets the tolerance for the discrimination 
-between the two components (default cutoff=0.3). Based on the optimization 
-settings, then the 'runBridge' function computes the inconsistency score 
-called 'Dscore', which assesses the significance of the inferred root 
-against a null distribution derived by permutation analysis.
+After the probability distribution is calculated for a given lineage, 
+then a rooting algorithm is used to search the LCA that provides the best  
+vertical heritage pattern. The rooting algorithm finds the optimal point 
+that splits the probability distribution into two components: one enriched
+with the queried feature (supporting vertical heritage in the lineage)
+and another with low evidence in favor of the feature's presence.
+The 'threshold' sets the tolerance for the discrimination between the 
+two components (default \code{threshold = 0.5}).
 }
 \examples{
 # Load datasets used for demonstration
-data(cogData)
+data(ogdata)
 
 # Create an object of class 'Bridge' for H. sapiens
-gbr <- newBridge(cogdata, phyloTree, spid="9606", cogids=cogids)
+gbr <- newBridge(ogdata, phyloTree, refsp="9606", ogids=ogids)
 
 # Run the Bridge algorithm
-gbr <- runBridge(gbr, nPermutations=100)
-res <- getBridge(gbr, what="results")
-
-\donttest{
-# Option: parallel version with SNOW package!
-library(snow)
-options(cluster=makeCluster(2, "SOCK"))
-gbr <- runBridge(gbr, nPermutations=100)
-stopCluster(getOption("cluster")) 
-}
+gbr <- runBridge(gbr)
 
 }
 \seealso{

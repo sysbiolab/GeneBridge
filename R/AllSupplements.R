@@ -1,192 +1,228 @@
 
 #-------------------------------------------------------------------------------
-.orthoCount <- function(cogdata, cogvec, sspvec, verbose) {
+.orthoCount <- function(ogdata, ogids, spids, verbose) {
     if (verbose) pb <- txtProgressBar(style = 3)
-    len <- length(cogvec)
-    orthotable <- sapply(seq_len(len), function(i) {
-        if (verbose) setTxtProgressBar(pb, i / len)
-        dt <- cogdata[which(cogdata$cog_id == cogvec[i]), ]
-        sapply(sspvec, function(sp) {
+    len1 <- length(ogids)
+    len2 <- length(spids)
+    orthotable <- vapply(seq_len(len1), function(i) {
+        if (verbose) setTxtProgressBar(pb, i / len1)
+        dt <- ogdata[which(ogdata$og_id == ogids[i]), ]
+        vapply(spids, function(sp) {
             sum(dt$ssp_id == sp)
-        })
-    })
+        }, numeric(1))
+    }, numeric(len2))
     if (verbose) close(pb)
-    rownames(orthotable) <- sspvec
-    colnames(orthotable) <- cogvec
+    rownames(orthotable) <- spids
+    colnames(orthotable) <- ogids
     orthotable[orthotable > 0] <- 1
     return(orthotable)
 }
 
 #-------------------------------------------------------------------------------
-.runBridge <- function(rootprobs, cutoff) {
-    # compute roots
-    Root <- NULL
-    Dscore <- NULL
-    D <- NULL
-    nroot <- nrow(rootprobs) + 1
-    for (i in seq_len(ncol(rootprobs))) {
-        proot <- c(rootprobs[, i], 0)
-        rt <- NA
-        dr <- 1
-        while (is.na(rt)) {
-            k <- which(proot < cutoff)[1]
-            res <- sapply((k + 1):nroot, function(j) {
-                mean(proot[k:j])
-            })
-            bridge <- which(res > cutoff)
-            if (length(bridge) > 0) {
-                dr <- res[bridge[1]]
-                proot[seq_len(k + bridge[1])] <- 1
-            } else {
-                rt <- k - 1
-            }
-        }
-        proot <- c(rootprobs[, i], 0)
-        dscore <- mean(proot[seq_len(rt)]) - mean(proot[(rt + 1):(nroot)])
-        Root <- c(Root, rt)
-        D <- c(D, dr)
-        Dscore <- c(Dscore, dscore)
+.runBridge <- function(spbranches, branchprobs, threshold) {
+    #-- adjust threshold for sampling errors from unbalanced branch sizes;
+    #-- each branch error will add to the relative error of the series (rers)
+    thr <- threshold
+    ntips <- as.numeric(table(spbranches$branch))
+    stder <- sqrt( (thr * (1 - thr)) / ntips )
+    ## independ. errors assumption doesn't apply
+    ## thr <- thr - (thr * stder)/2
+    stder[1] <- NA # 1st branch is given
+    rers <- vapply(seq_along(stder), function(i){
+        mean( stder[i] - stder[-i] , na.rm = TRUE)
+    }, numeric(1))
+    rers[1] <- 0 # 1st branch is given
+    thr <- thr - (thr * rers)/2
+    #-- start Bridge
+    nroot <- ncol(branchprobs)
+    probs <- score <- branchprobs
+    roots <- NULL
+    for (i in seq_len(nrow(branchprobs))) {
+        pbranch <- branchprobs[i, ]
+        pbridge <- vapply(seq_len(nroot), function(m){
+            pr <- vapply(seq(m, nroot), function(n) {
+                mean(pbranch[seq(m, n)])
+            }, numeric(1))
+            max(pr)
+        }, numeric(1))
+        #-- find k-branches below threshold
+        k <- pbridge < thr ## decision boundary
+        #-- assign root
+        rt <- .assignRoot(k)
+        is_bridge <- pbridge > pbranch
+        rt <- .unrootBridge(is_bridge, rt)
+        #-- assign 'pbridge' a cumulative score (not used for rooting)
+        rscore <- .assignRootScore(pbridge)
+        #--get results
+        probs[i, ] <- pbridge
+        score[i, ] <- rscore
+        roots <- c(roots, rt)
     }
-    orthoroot <- data.frame(Root = Root, D = D, Dscore = Dscore,
-        stringsAsFactors = FALSE)
-    rownames(orthoroot) <- colnames(rootprobs)
-    return(orthoroot)
+    names(roots) <- rownames(branchprobs)
+    bridgeprobs <- list(probs=probs, score=score, roots=roots)
+    return(bridgeprobs)
 }
 
 #-------------------------------------------------------------------------------
-.runPermutation <- function(orthoroot, rootprobs, nPermutations, verbose) {
-    # function to compute Dscore from random rootprobs
-    .nullRootProbs <- function(rootprobs, orthoroot) {
-        sapply(seq_len(ncol(rootprobs)), function(i) {
-            .getAdjDscore(proot = rootprobs[, i], 
-            rt = orthoroot[i, "Root"], TRUE)
-        })
+.assignRoot <- function(k){
+    if(any(k)){
+        rt <- which(k)[1] - 1
+    } else {
+        rt <- length(k)
+    }
+    return(rt)
+}
+
+#-------------------------------------------------------------------------------
+# m = 5; n = 20
+# pb <- c(rep(1, m), rep(0.1, n-m))
+# pr <- .assignRootScore(pb)
+# plot(seq_along(pr), pr)
+# plot(seq_along(pbridge), pbridge)
+.assignRootScore <- function(pbridge){
+    pb <- c(1, pbridge, 0)
+    m <- cumsum(pb)
+    m <- (1 + m) / (1 + sum(m) )
+    n <- rev( cumsum( rev(1 - pb) ) )
+    n <- (1 + n) / ( 1 + sum(n) )
+    pr <- m + n
+    pr <- pr[ -c(1, length(pr) ) ]
+    pr <- pr / max(pr)
+    return(pr)
+}
+
+#-------------------------------------------------------------------------------
+# check if a bridge was not assigned to the root: the root is an 
+# "anchor point", not the other way around.
+.unrootBridge <- function(is_bridge, rt){
+    while(is_bridge[rt] && rt>1){
+        rt <- rt - 1
+    }
+    return(rt)
+}
+
+#-------------------------------------------------------------------------------
+.permAsymptotic <- function(branchprobs, roots, nPermutations,
+    pAdjustMethod, verbose) {
+    # get root space
+    roots <- roots[rownames(branchprobs)]
+    nogs <- nrow(branchprobs)
+    nroots <- ncol(branchprobs)
+    rext <- (nroots*2)-1
+    rootspace <- t(vapply(seq_len(nogs), function(i){
+        .getRootSpace(proot = branchprobs[i, ], rt = roots[i])
+    }, numeric(rext)))
+    # get Dscore
+    dscore <- vapply(seq_len(nogs), function(i) {
+        .getAdjDscore(rspace = rootspace[i, ])
+    }, numeric(1))
+    orthostats <- data.frame(Root=roots, Dscore=dscore)
+    # function to compute null Dscore from random rootspace
+    .nullDscore <- function(rootspace) {
+        vapply(seq_len(nogs), function(i) {
+            .getAdjDscore(rspace = sample(rootspace[i, ]))
+        }, numeric(1))
     }
     # compute null
     if (.isParallel()) {
         cl <- getOption("cluster")
-        clusterExport(cl, list(
-            ".nullRootProbs", "rootprobs", "orthoroot", ".getAdjDscore"
-        ), envir = environment())
+        clusterExport(cl=cl, envir = environment(),
+            list=list(".nullDscore", "rootspace", ".getAdjDscore"))
         nulldist <- parSapply(cl, seq_len(nPermutations), function(i) {
-            .nullRootProbs(rootprobs, orthoroot)
-        })
+            .nullDscore(rootspace)
+        }, simplify = FALSE)
     } else {
         if (verbose) pb <- txtProgressBar(style = 3)
-        nulldist <- sapply(seq_len(nPermutations), function(i) {
+        nulldist <- vapply(seq_len(nPermutations), function(i) {
             if (verbose) setTxtProgressBar(pb, i / nPermutations)
-            .nullRootProbs(rootprobs, orthoroot)
-        })
+            .nullDscore(rootspace)
+        }, numeric(nogs))
         if (verbose) close(pb)
     }
-    adjDscore <- sapply(seq_len(ncol(rootprobs)), function(i) {
-        .getAdjDscore(rootprobs[, i], rt = orthoroot[i, "Root"])
-    })
-    # z-transformation
-    xmd <- apply(nulldist, 1, mean)
-    xsd <- apply(nulldist, 1, sd)
-    zscore <- (adjDscore - xmd) / xsd
-    pvals <- pnorm(zscore, lower.tail = FALSE)
-    return(list(zscore = zscore, pvals = pvals))
-}
-
-#-------------------------------------------------------------------------------
-.getAdjDscore <- function(proot, rt, perm = FALSE) {
-    nroot <- length(proot)
-    # pspace <- c(rep(1, nroot),rep(0, nroot))
-    pspace <- c(seq_len(nroot * 2)) %% 2
-    ct <- 1 + nroot - rt
-    mask <- ct:(ct + nroot - 1)
-    if (perm) {
-        pspace[mask] <- sample(pspace)[mask]
+    # get null stats
+    if(nogs==1){
+        nu_m <- mean(nulldist)
+        nu_s <- sd(nulldist)
     } else {
-        pspace[mask] <- proot
+        nu_m <- apply(nulldist, 1, mean)
+        nu_s <- apply(nulldist, 1, sd)
     }
-    rt <- nroot
-    nroot <- length(pspace)
-    mean(pspace[seq_len(rt)]) - mean(pspace[(rt + 1):(nroot)])
-}
-###---code for testing
-# proot <- c(1,1,1,1,1,1,1,1,0,0,0,0,0,0,0);rt=8
-# proot <- c(1,0,1,0,1,0,1,0,1,0,1,0,1,0,1);rt=8
-# .getAdjDscore(proot,rt)
-# null <- sapply(seq_len(1000),function(i){
-#   .getAdjDscore(proot=proot,rt=rt,TRUE)
-# })
-# max(null)
-# plot(density(null))
-#---
-# testdnoise <- function(nroot=25,nPermutations=1000,noise=0){
-#   sapply(seq_len(nroot),function(rt){
-#     proot<-rep(0,nroot);proot[seq_len(rt)]=1
-#     if(noise>0) proot[sample(nroot,noise)]<-sample(c(0,1),noise,replace=TRUE)
-#     .getAdjDscore(proot,rt)-.getAdjDscore(proot,rt,TRUE)
-#   })
-# }
-# res <- testdnoise(nroot=25,nPermutations=1000,noise=25); plot(density(res))
-## check nulldist across rootprobs for the best distributions
-# testddist <- function(nroot=25,nPermutations=1000){
-#   testsd <- function(proot,rt,nPermutations){
-#     xd <- sapply(seq_len(nPermutations),function(i){
-#       .getAdjDscore(proot,rt,TRUE)}
-#       )
-#     xd <- quantile(xd,probs=1-1/nPermutations,names=FALSE)
-#     .getAdjDscore(proot,rt)/xd
-#   }
-#   sapply(seq_len(nroot),function(rt){
-#     proot<-rep(0,nroot);proot[seq_len(rt)]=1
-#     testsd(proot,rt,nPermutations)
-#   })
-# }
-# testddist(nroot=25,nPermutations=1000)
-
-#-------------------------------------------------------------------------------
-.getprobs <- function(x, penalty) {
-    loss <- length(x) - sum(x)
-    gain <- sum(x) * penalty
-    gain / (gain + loss)
+    # comput z-statistics
+    stat <- (orthostats$Dscore - nu_m) / nu_s
+    pvals <- pnorm(stat, lower.tail = FALSE)
+    # add stats to orthostats
+    orthostats$Statistic <- stat
+    orthostats$Pvalue <- pvals
+    orthostats$AdjPvalue <- p.adjust(pvals, method = pAdjustMethod)
+    return(orthostats)
 }
 
 #-------------------------------------------------------------------------------
-.isParallel <- function() {
-    b1 <- "package:snow" %in% search()
-    b2 <- tryCatch(
-        {
-            cl <- getOption("cluster")
-            cl.check <- FALSE
-            if (is(cl, "cluster")) {
-                idx <- seq_len(length(cl))
-                cl.check <- vapply(idx, function(i) {
-                  isOpen(cl[[i]]$con)
-                }, logical(1))
-                cl.check <- all(cl.check)
-            }
-            cl.check
-        },
-        error = function(e) { FALSE }
+#-- Dscore is adjusted to stabilize the root space as the root 
+#-- approaches the boundaries.
+.getAdjDscore <- function(rspace) {
+    rt <- (length(rspace) + 1)/2
+    # get ensemble M
+    M <- mean(rspace[seq_len(rt)]) 
+    # get ensemble N
+    N <- mean(rspace[ seq((rt + 1), length(rspace)) ])
+    # get d-score
+    D <- M - N
+    return(D)
+}
+
+#-------------------------------------------------------------------------------
+.getRootSpace <- function(proot, rt) {
+    # adjust the root space by adding an 'outgroup', 
+    # pseudo counts that extends boundary conditions and
+    # place the root at the center of 'rspace'
+    names(proot) <- NULL
+    len <- length(proot)
+    m <- len - rt
+    n <- (len - m) - 1
+    outm <- 1 - mean(proot[ seq((rt + 1), len) ])
+    outn <- 1 - mean(proot[seq_len(rt)])
+    rspace <- c(rep(outm, m), proot, rep(outn, n))
+    return(rspace)
+}
+
+#-------------------------------------------------------------------------------
+.branchProbs <- function(orthocount, penalty){
+    .getprobs <- function(x, penalty) {
+        loss <- length(x) - sum(x)
+        gain <- sum(x) * penalty
+        gain / (gain + loss)
+    }
+    branchprobs <- aggregate(orthocount[, -1, drop=FALSE],
+        by = list(orthocount[, 1]),
+        FUN = .getprobs, penalty = penalty
     )
-    all(c(b1, b2))
+    rownames(branchprobs) <- branchprobs[, 1]
+    branchprobs <- branchprobs[, -1, drop=FALSE]
+    branchprobs <- as.matrix(branchprobs)
+    branchprobs <- t(branchprobs)
+    return(branchprobs)
 }
 
 #-------------------------------------------------------------------------------
 #--- Return LCAs and branches from a 'phylo' obj
-spBranches <- function(phyloTree, spid) {
-    if (all(phyloTree$tip.label != spid)) {
-        stop("NOTE: 'spid' should be listed in 'phyloTree'!")
+.spBranches <- function(phyloTree, refsp) {
+    if (all(phyloTree$tip.label != refsp)) {
+        stop("NOTE: 'refsp' should be listed in 'phyloTree'!")
     }
-    lcas <- getLCAs(phyloTree)
-    spbranches <- getBranches(phyloTree, lcas)
-    #---set spid as the 1st branch
+    lcas <- .getLCAs(phyloTree)
+    spbranches <- .getBranches(phyloTree, lcas)
+    #---set refsp as the 1st branch
     spbranches$branch <- spbranches$branch + 1
-    spbranches[spid, "branch"] <- 1
+    spbranches[refsp, "branch"] <- 1
     #---set obj to 'sspbranches' format
     spbranches <- spbranches[, c("ssp_id", "ssp_name", "branch")]
-    spbranches <- spbranches[sort.list(spbranches$branch), ]
-    colnames(spbranches)[3] <- spid
+    idx <- match(spbranches$ssp_id, phyloTree$tip.label)
+    spbranches <- spbranches[order(spbranches$branch, -idx), ]
     rownames(spbranches) <- spbranches$ssp_id
     return(spbranches)
 }
-getLCAs <- function(phyloTree) {
+.getLCAs <- function(phyloTree) {
     ntips <- length(phyloTree$tip.label)
     edgetree <- phyloTree$edge
     tip <- edgetree[nrow(edgetree), 2]
@@ -198,11 +234,10 @@ getLCAs <- function(phyloTree) {
     }
     return(LCAs)
 }
-getBranches <- function(phyloTree, LCAs) {
+.getBranches <- function(phyloTree, LCAs) {
     ntips <- length(phyloTree$tip.label)
     edgetree <- phyloTree$edge
     edges <- seq_len(nrow(edgetree))
-    lcas <- rev(which(edgetree[, 2] %in% LCAs))
     edgetree <- cbind(edgetree, NA)
     for (loc in LCAs) {
         idx1 <- which(edgetree[, 2] == loc)
@@ -212,7 +247,6 @@ getBranches <- function(phyloTree, LCAs) {
     }
     edgetree[is.na(edgetree[, 3]), 3] <- edgetree[1, 1]
     branches <- edgetree[edgetree[, 2] <= ntips, 2:3]
-    #---
     ids <- phyloTree$tip.label[branches[, 1]]
     if (!is.null(phyloTree$tip.alias)) {
         alias <- phyloTree$tip.alias[branches[, 1]]
@@ -226,51 +260,70 @@ getBranches <- function(phyloTree, LCAs) {
     rownames(branches) <- branches$ssp_id
     return(branches)
 }
-tipOrder <- function(phyloTree) {
+.tipOrder <- function(phyloTree) {
     tporder <- phyloTree$edge[, 2]
     tporder <- tporder[tporder <= Ntip(phyloTree)]
     tporder <- as.character(phyloTree$tip.label[tporder])
     return(tporder)
 }
-rotatePhyloTree <- function(phyloTree, spid) {
-    tip <- which(phyloTree$tip.label == spid)
-    lcas <- mrca(phyloTree)[, spid]
-    phyloTree$edge.length <- rep(1, nrow(phyloTree$edge))
-    tgroup <- dist.nodes(phyloTree)[, tip]
-    tgroup <- tgroup[lcas]
-    names(tgroup) <- names(lcas)
-    #---
-    ct <- 1
-    tp <- tgroup
+.rotatePhyloTree <- function(phyloTree, refsp) {
+    top.tip <- which(phyloTree$tip.label == refsp)
+    if (phyloTree$edge[Nedge(phyloTree), 2] == top.tip) {
+        return(phyloTree)
+    }
+    mrcas <- mrca(phyloTree)[, refsp]
+    phyloTree$edge.length <- rep(1, Nedge(phyloTree))
+    tgroup <- dist.nodes(phyloTree)[, top.tip]
+    phyloTree$edge.length <- NULL
+    tgroup <- tgroup[mrcas]
+    names(tgroup) <- names(mrcas)
+    ct <- 1; tp <- tgroup
     for (i in sort(unique(tgroup))) {
         tgroup[tp == i] <- ct
         ct <- ct + 1
     }
-    #---
-    tord <- rev(rank(rev(tgroup), ties.method = "first"))
-    #---
-    phyloTree <- rotateConstr(phyloTree, names(sort(tord, decreasing = TRUE)))
-    tord <- tord[tipOrder(phyloTree)]
-    #---
-    tgroup <- tgroup[names(tord)]
-    phyloTree$tip.group <- tgroup
-    #---
-    lcas <- lcas[names(tord)]
-    # atualiza lca do spid, troca pelo nodo mais proximo
-    tp <- phyloTree$edge[, 2]
-    lcas[spid] <- phyloTree$edge[which(tp == tip), 1]
-    phyloTree$tip.lcas <- lcas
-    #---
+    tord <- names(sort(tgroup, decreasing = TRUE))
+    phyloTree <- rotateConstr(phyloTree, constraint = tord)
+    if (phyloTree$edge[Nedge(phyloTree), 2] != top.tip) {
+        msg <- "'refsp' could not be placed at the top of the phyloTree."
+        stop(msg, call. = FALSE)
+    }
     return(phyloTree)
 }
-# getLCAs <- function(phyloTree){
-#     edgetree<-phyloTree$edge
-#     LCAs<-edgetree[1,1]
-#     while( !is.na(LCAs[length(LCAs)]) ){
-#         idx<-which(edgetree[,1] == LCAs[length(LCAs)] )[2]
-#         res<-edgetree[idx,2]
-#         LCAs<-c(LCAs,res)
-#     }
-#     LCAs<-LCAs[seq_len(length(LCAs)-1)]
-#     return(LCAs)
-# }
+
+#-------------------------------------------------------------------------------
+.isParallel <- function() {
+    b1 <- "package:snow" %in% search()
+    b2 <- tryCatch(
+        {
+            cl <- getOption("cluster")
+            cl.check <- FALSE
+            if (is(cl, "cluster")) {
+                idx <- seq_len(length(cl))
+                cl.check <- vapply(idx, function(i) {
+                    isOpen(cl[[i]]$con)
+                }, logical(1))
+                cl.check <- all(cl.check)
+            }
+            cl.check
+        },
+        error = function(e) { FALSE }
+    )
+    all(c(b1, b2))
+}
+
+#-------------------------------------------------------------------------------
+.get.simulation <- function(gbr){
+    if (!.checkStatus(gbr, "Simulation")) {
+        stop("'gbr' object should have 'simulation' data.")
+    }
+    branches <- getBridge(gbr, what="branches")
+    prediction <- getBridge(gbr, what="roots")
+    misc <- getBridge(gbr, what="misc")
+    reference <- misc$rogs$ref_roots
+    reference <- reference[names(prediction)]
+    prediction <- factor(prediction, levels = branches)
+    reference <- factor(reference, levels = branches)
+    simdata <- list(classes=branches, reference=reference, prediction=prediction)
+    return(simdata)
+}

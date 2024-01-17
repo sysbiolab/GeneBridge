@@ -4,19 +4,19 @@
 \alias{newBridge}
 \title{Constructor of Bridge-class objects}
 \usage{
-newBridge(cogdata, phyloTree, spid, cogids = NULL, verbose = TRUE)
+newBridge(ogdata, phyloTree, refsp, ogids = NULL, verbose = TRUE)
 }
 \arguments{
-\item{cogdata}{A data frame with COG data.}
+\item{ogdata}{A data frame with COG data.}
 
 \item{phyloTree}{Object of class \code{phylo}.}
 
-\item{spid}{A single string or integer specifying the reference species 
-to be used in the Bridge algorithm. This species should be listed in the 
-\code{phyloTree}.}
+\item{refsp}{A single string or integer specifying the reference species 
+to be used in the Bridge algorithm. The \code{refsp} must be listed in 
+the \code{tip.label} of the \code{phylo} object.}
 
-\item{cogids}{An optional data frame with COG annotation. Alternatively, 
-this can be a character vector with COG IDs.}
+\item{ogids}{An optional character vector listing which OGs should be
+evaluated by the Bridge algorithm.}
 
 \item{verbose}{A single logical value specifying to display detailed 
 messages (when \code{verbose=TRUE}) or not (when \code{verbose=FALSE}).}
@@ -29,10 +29,10 @@ A preprocessed \linkS4class{Bridge} class object.
 }
 \examples{
 # Load datasets used for demonstration
-data(cogData)
+data(ogdata)
 
 # Create an object of class 'Bridge' for H. sapiens
-gbr <- newBridge(cogdata, phyloTree, spid="9606", cogids=cogids)
+gbr <- newBridge(ogdata, phyloTree, refsp="9606", ogids=ogids)
 
 }
 \seealso{

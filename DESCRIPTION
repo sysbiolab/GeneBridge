@@ -9,8 +9,8 @@ Authors@R:
               email = "mauro.a.castro@gmail.com",
               comment = c(ORCID = "0000-0003-4942-8131")))
 Depends: R (>= 4.3), methods
-Imports: snow, ape, grDevices, graphics, stats, utils, data.table
-Suggests: RUnit, BiocGenerics, BiocStyle, knitr, rmarkdown, geneplast.data, ggplot2, ggpubr, plyr
+Imports: grDevices, graphics, utils, stats, ape, data.table, snow, ggplot2, ggrepel
+Suggests: RUnit, BiocGenerics, BiocStyle, knitr, rmarkdown, geneplast.data, ggthemes, egg, caret
 Description: GeneBridge is an R package designed to assess the evolutionary history of genes across diverse species. It implements the Bridge algorithm to infer the evolutionary root of genes in a given species tree. By rooting orthologous genes in large-scale evolutionary snalysis, GeneBridge can provide a framework for exploring evolutionary roots within biological systems.
 License: Artistic-2.0
 biocViews: Genetics, GeneRegulation, SystemsBiology

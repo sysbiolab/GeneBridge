@@ -31,26 +31,28 @@ knitr::include_graphics("Fig1.png")
 
 # Quick start
 
-We will use the `cogData` dataset available from the *GeneBridge* package to demonstrate the analysis workflow. This dataset includes four objects containing orthology annotation derived from the *STRING database*, release 9.1. The `cogData` dataset should be used for demonstration purposes only as it represents a subset of the STRING database. *GeneBridge* can use other sources of orthology information, provided that the input data is set according to the `cogData` dataset.
+We will use the `ogdata` dataset available from the *GeneBridge* package to demonstrate the analysis workflow. This dataset includes four objects containing orthology annotation derived from the *STRING database*, release 9.1. The `ogdata` dataset should be used for demonstration purposes only as it represents a subset of the STRING database. *GeneBridge* can use other sources of orthology information, provided that the input data is set according to the `ogdata` dataset.
 
 ```{r}
 library(GeneBridge)
-data("cogData")
+data("ogdata")
 ```
 
 ## Evolutionary rooting
 
-The rooting analysis starts by running the `newBridge()` function, which will check the consistency of the input data. The user should provide **1**) a `cogdata` object, **2**) a `phyloTree` object, and **3**) set a reference species for which the evolutionary root of its genes will be inferred. Next, the `runBridge()` function will run the *Bridge* algorithm. The results are then retrieved by `getBridge()` function. The pipeline returns the inferred root of each OG evaluated by the *Bridge* algorithm, including the *Dscore* and the associated empirical *p-value*. Additionally, the `plotBridge()` function allows the visualization of the inferred roots (e.g. **Figure 2**) and the LCAs of the reference species (e.g. **Figure 3**).
+The rooting analysis starts by running the `newBridge()` function, which will check the consistency of the input data. The user should provide **1**) a `ogdata` object, **2**) a `phyloTree` object, and **3**) set a reference species for which the evolutionary root of its genes will be inferred. Next, the `runBridge()` function will run the *Bridge* algorithm. The results are then retrieved by `getBridge()` function. The pipeline returns the inferred root of each OG evaluated by the *Bridge* algorithm, including the *Dscore* and the associated empirical *p-value*. Additionally, the `plotBridgeTree()` function allows the visualization of the inferred roots (e.g. **Figure 2**) and the LCAs of the reference species (e.g. **Figure 3**).
 
 1 - Create an object of class `Bridge`.
-```{r, eval=TRUE}
-gbr <- newBridge(cogdata=cogdata, phyloTree=phyloTree, spid="9606", verbose=FALSE)
+```{r, eval=TRUE, results=FALSE}
+gbr <- newBridge(ogdata=ogdata, phyloTree=phyloTree, refsp="9606")
 ```
 
 2 - Run the `runBridge()` function.
-```{r, eval=TRUE}
-set.seed(1)
-gbr <- runBridge(gbr, nPermutations=100, verbose=FALSE)
+```{r, eval=TRUE, results=FALSE}
+# Run root inference
+gbr <- runBridge(gbr, threshold=0.3)
+# Run permutation to assess consistency of root placements
+gbr <- runPermutation(gbr, nPermutations=100)
 # Note: 'nPermutations' is set to 100 for demonstration purposes; 
 # otherwise, set 'nPermutations' >=1000
 ```
@@ -62,8 +64,8 @@ head(res)
 ```
 
 4 - Check the inferred root of a given OG.
-```{r label='plotBridge1', eval=TRUE}
-plotBridge(gbr, whichOG="NOG40170")
+```{r, eval=FALSE}
+plotBridgeTree(gbr, whichOG="NOG40170")
 ```
 
 ```{r fig2, echo=FALSE, fig.cap="Inferred evolutionary rooting scenario for NOG40170. Monophyletic groups are ordered to show all branches of the tree below the queried species in the analysis.", out.width = '50%'}
@@ -71,8 +73,8 @@ knitr::include_graphics("Fig2.png")
 ```
 
 5 - Visualize the LCAs of the reference species in the analysis.
-```{r, eval=TRUE}
-plotBridge(gbr, plot.lcas = TRUE)
+```{r, eval=FALSE}
+plotBridgeTree(gbr, plot.lcas = TRUE)
 ```
 
 ```{r fig3, echo=FALSE, fig.cap="LCAs of the reference species in the analysis.", out.width = '50%'}
@@ -92,20 +94,58 @@ library(geneplast.data.string.v91)
 data(gpdata_string_v91)
 ```
 
-2 - Create an object of class `Bridge` for a reference `spid`.
+2 - Create an object of class `Bridge` for a reference `refsp`.
 
 ```{r, eval=FALSE}
-gbr <- newBridge(cogdata=cogdata, phyloTree=phyloTree, spid="9606")
+gbr <- newBridge(ogdata=cogdata, phyloTree=phyloTree, refsp="9606")
 ```
 
-3 - Run the `runBridge()` function and infer the evolutionary roots. 
+3 - Run the `runBridge()` and `runPermutation()` functions to infer the evolutionary roots.
 *Note: This step may require a significant processing time due to the large number of OGs in the input data (`nPermutations` argument is set to 100 for demonstration purpose only).*
 
 ```{r, eval=FALSE}
-gbr <- runBridge(gbr, nPermutations=100, verbose=TRUE)
+gbr <- runBridge(gbr)
+gbr <- runPermutation(gbr, nPermutations=100)
 res <- getBridge(gbr, what="results")
-head(res)
 ```
+
+
+# Uncertainty of root placement
+
+```{r, eval=FALSE}
+# Load caret (to assess classification performance)
+library(caret)
+
+# Load ape (to generate a random 'phyloTree')
+library(ape)
+phyloTree <- rtree(n=100)
+
+# Run 'simulateRogs' to simulate 100 random orthologous groups (ROGs)
+gbr <- simulateRogs(phyloTree=phyloTree, n.rogs = 100, gain = 0.1, loss = 0.2)
+
+# Run Bridge to predict a root for each ROG
+gbr <- runBridge(gbr)
+
+# Get reference and predicted roots
+sim <- getBridge(gbr, what="simulation")
+
+# Check overall performance
+cm <- confusionMatrix(data = sim$prediction, reference = sim$reference)
+cm$overall["Accuracy"]
+
+# Check confusion matrix
+plotBridgeSimulation(gbr)
+
+# Assess consistency of root placements
+gbr <- runPermutation(gbr, nPermutations=1000)
+
+# Plot D-scores and associated P-values
+plotBridgeStats(gbr)
+# pdf(file = "root_uncertainty.pdf", width = 4, height = 4)
+# plot(gg1)
+# dev.off()
+```
+
 
 # Runtime performance
 
@@ -116,33 +156,36 @@ library(ggthemes)
 library(egg)
 library(data.table)
 
-#--- Load cogdata
-data(cogData)
+#--- Load ogdata
+data(ogdata)
 
 #--- Get "OGs" that include a ref. species (e.g. "9606")
-cogids <- unique(cogdata$cog_id[cogdata$ssp_id=="9606"])
-length(cogids)
+ogids <- unique(ogdata$og_id[ogdata$ssp_id=="9606"])
+length(ogids)
 # [1] 142
 
 #--- Make a function to check runtime for different input sizes
 check.rooting.runtime <- function(n){
-  cogids.subset <- cogids[1:n]
-  cogdata.subset <- cogdata[cogdata$cog_id%in%cogids.subset,]
+  ogids.subset <- ogids[1:n]
+  ogdata.subset <- ogdata[ogdata$og_id%in%ogids.subset,]
   rt1 <- system.time(
-    gbr <- newBridge(cogdata=cogdata.subset, phyloTree=phyloTree, 
-      spid="9606", verbose=FALSE)
+    gbr <- newBridge(ogdata=ogdata.subset, phyloTree=phyloTree, 
+      refsp="9606", verbose=FALSE)
   )["elapsed"]
   rt2 <- system.time(
-    gbr <- runBridge(gbr, nPermutations=100, verbose=FALSE)
+    gbr <- runBridge(gbr, verbose=FALSE)
   )["elapsed"]
-  rtime <- c(rt1,rt2)
-  names(rtime) <- c("runtime.preprocess","runtime.bridge")
+  rt3 <- system.time(
+    gbr <- runPermutation(gbr, nPermutations=100, verbose=FALSE)
+  )["elapsed"]
+  rtime <- c(rt1,rt2,rt3)
+  names(rtime) <- c("runtime.preprocess","runtime.bridge", "runtime.perm")
   return(rtime)
 }
 # check.rooting.runtime(n=5)
 
 #--- Run check.rooting.runtime() for different input sizes (x3 iterations)
-input_size <- seq.int(10,length(cogids),10)
+input_size <- seq.int(10,length(ogids),10)
 iterations <- 1:3
 elapsed_lt <- lapply(iterations, function(i){
   print(paste0("Iteration ",i))
@@ -168,7 +211,15 @@ runtime.bridge <- data.frame(InputSize=input_size, runtime.bridge)
 runtime.bridge <- melt(as.data.table(runtime.bridge), "InputSize")
 colnames(runtime.bridge) <- c("Input.Size","Iteration","Elapsed.Time")
 
-#--- Plot runtime results
+#--- Get 'Permutation' runtime
+runtime.perm <- sapply(elapsed_lt, function(lt){
+  lt["runtime.perm",]
+})
+runtime.perm <- data.frame(InputSize=input_size, runtime.perm)
+runtime.perm <- melt(as.data.table(runtime.perm), "InputSize")
+colnames(runtime.perm) <- c("Input.Size","Iteration","Elapsed.Time")
+
+#--- Create ggplot objects with runtime results
 cls <- c("#69b3a2",adjustcolor("#69b3a2", alpha=0.5))
 gg1 <- ggplot(runtime.preprocess, aes(x=Input.Size, y=Elapsed.Time)) +
   geom_smooth(method=loess, se=TRUE) +
@@ -176,7 +227,7 @@ gg1 <- ggplot(runtime.preprocess, aes(x=Input.Size, y=Elapsed.Time)) +
   scale_x_continuous(breaks=pretty(runtime.preprocess$Input.Size)) +
   scale_y_continuous(breaks=pretty(runtime.preprocess$Elapsed.Time)) +
   theme_pander() + labs(title="newBridge()") +
-  xlab("Input size (n)") + ylab("Elapsed time (s)") +
+  xlab("Input size (n OGs)") + ylab("Elapsed time (s)") +
   theme(aspect.ratio=1, plot.title=element_text(size=12))
 gg2 <- ggplot(runtime.bridge, aes(x=Input.Size, y=Elapsed.Time)) +
   geom_smooth(method=loess, se=TRUE) +
@@ -184,18 +235,27 @@ gg2 <- ggplot(runtime.bridge, aes(x=Input.Size, y=Elapsed.Time)) +
   scale_x_continuous(breaks=pretty(runtime.bridge$Input.Size)) +
   scale_y_continuous(breaks=pretty(runtime.bridge$Elapsed.Time)) +
   theme_pander() + labs(title="runBridge()") +
-  xlab("Input size (n)") + ylab("Elapsed time (s)") +
+  xlab("Input size (n OGs)") + ylab("Elapsed time (s)") +
   theme(aspect.ratio=1, plot.title=element_text(size=12))
-grid.arrange(gg1, gg2, nrow = 1)
-pdf(file = "rooting_runtime.pdf", width = 7, height = 3)
-grid.arrange(gg1, gg2, nrow = 1)
-dev.off()
+gg3 <- ggplot(runtime.perm, aes(x=Input.Size, y=Elapsed.Time)) +
+  geom_smooth(method=loess, se=TRUE) +
+  geom_point(color=cls[1], fill=cls[2], size=3, shape=21) +
+  scale_x_continuous(breaks=pretty(runtime.perm$Input.Size)) +
+  scale_y_continuous(breaks=pretty(runtime.perm$Elapsed.Time)) +
+  theme_pander() + labs(title="runPermutation()") +
+  xlab("Input size (n OGs)") + ylab("Elapsed time (s)") +
+  theme(aspect.ratio=1, plot.title=element_text(size=12))
+
+# Plot a grid with the ggplot objects
+grid.arrange(gg1, gg2, gg3, nrow = 1)
+# pdf(file = "rooting_runtime.pdf", width = 9, height = 3)
+# grid.arrange(gg1, gg2, gg3, nrow = 1)
+# dev.off()
 ```
 
-```{r fig4, echo=FALSE, fig.cap="Runtime performance of the rooting pipeline. Each point indicate the elapsed time to evaluate the 'check.rooting.runtime()' function, which assesses the execution time of the *newBridge()* and *runBridge()* functions separatelly.", out.width = '100%'}
+```{r fig4, echo=FALSE, fig.cap="Runtime performance of the rooting pipeline. Each point indicate the elapsed time to evaluate the 'check.rooting.runtime()' function, which assesses the execution time of the *newBridge()*, *runBridge()*, and *runPermutation()* functions separatelly.", out.width = '100%'}
 knitr::include_graphics("Fig4.png")
 ```
-
 
 # Orthology data packages
 

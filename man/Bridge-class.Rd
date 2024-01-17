@@ -13,18 +13,39 @@ Bridge: An S4 class for Bridge analysis
 \section{Slots}{
 
 \describe{
-\item{\code{cogids}}{Object of class \code{"data.frame"}, a data frame with COG data.}
+\item{\code{refsp}}{Object of class \code{"character"}, a single string 
+specifying a reference species used to sort the \code{"phylo"} object.}
+
+\item{\code{ogids}}{Object of class \code{"character"}, a vector of strings 
+listing OGs evaluated by the Bridge algorithm.}
 
 \item{\code{tree}}{Object of class \code{"phylo"}, a given species tree.}
 
 \item{\code{spbranches}}{Object of class \code{"data.frame"}, a data frame 
-listing branches of a given species tree.}
+listing branches of the \code{"phylo"} object.}
 
-\item{\code{orthoroot}}{Object of class \code{"data.frame"}, a data.frame with 
+\item{\code{orthocount}}{Object of class \code{"data.frame"}, a data.frame with 
+results from the 'Bridge' constructor.}
+
+\item{\code{orthostats}}{Object of class \code{"data.frame"}, a data.frame with 
 results from the 'runBridge' function.}
 
-\item{\code{orthoct}}{Object of class \code{"data.frame"}, a data.frame with 
-results from the 'Bridge' constructor.}
+\item{\code{branchprobs}}{Object of class \code{"matrix"}, a numeric matrix with 
+results from the 'runBridge' function.}
+
+\item{\code{bridgeprobs}}{Object of class \code{"matrix"}, a numeric matrix with 
+results from the 'runBridge' function.}
+
+\item{\code{rootscore}}{Object of class \code{"matrix"}, a numeric matrix with 
+results from the 'runBridge' function.}
+
+\item{\code{branches}}{Object of class \code{"numeric"}, a numeric vector with 
+results from the 'runBridge' function.}
+
+\item{\code{roots}}{Object of class \code{"numeric"}, a numeric vector with 
+results from the 'runBridge' function.}
+
+\item{\code{misc}}{A list with intermediate objects for downstream methods.}
 
 \item{\code{status}}{Object of class \code{"character"}, a string specifying the 
 status of the Bridge object based on the available methods.}

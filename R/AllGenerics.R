@@ -7,6 +7,13 @@ setGeneric("runBridge", signature = "gbr",
 )
 
 #-------------------------------------------------------------------------------
+setGeneric("runPermutation", signature = "gbr",
+    function(gbr, ...) {
+        standardGeneric("runPermutation")
+    }, package = "GeneBridge"
+)
+
+#-------------------------------------------------------------------------------
 setGeneric("getBridge", signature = "gbr",
     function(gbr, what = "status") {
         standardGeneric("getBridge")
@@ -14,8 +21,22 @@ setGeneric("getBridge", signature = "gbr",
 )
 
 #-------------------------------------------------------------------------------
-setGeneric("plotBridge", signature = "gbr",
+setGeneric("plotBridgeTree", signature = "gbr",
     function(gbr, ...) {
-        standardGeneric("plotBridge")
+        standardGeneric("plotBridgeTree")
+    }, package = "GeneBridge"
+)
+
+#-------------------------------------------------------------------------------
+setGeneric("plotBridgeStats", signature = "gbr",
+    function(gbr, ...) {
+        standardGeneric("plotBridgeStats")
+    }, package = "GeneBridge"
+)
+
+#-------------------------------------------------------------------------------
+setGeneric("plotBridgeSimulation", signature = "gbr",
+    function(gbr, ...) {
+        standardGeneric("plotBridgeSimulation")
     }, package = "GeneBridge"
 )
