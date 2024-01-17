@@ -38,6 +38,7 @@ library(GeneBridge)
 data("ogdata")
 ```
 
+
 ## Evolutionary rooting
 
 The rooting analysis starts by running the `newBridge()` function, which will check the consistency of the input data. The user should provide **1**) a `ogdata` object, **2**) a `phyloTree` object, and **3**) set a reference species for which the evolutionary root of its genes will be inferred. Next, the `runBridge()` function will run the *Bridge* algorithm. The results are then retrieved by `getBridge()` function. The pipeline returns the inferred root of each OG evaluated by the *Bridge* algorithm, including the *Dscore* and the associated empirical *p-value*. Additionally, the `plotBridgeTree()` function allows the visualization of the inferred roots (e.g. **Figure 2**) and the LCAs of the reference species (e.g. **Figure 3**).
@@ -81,6 +82,16 @@ plotBridgeTree(gbr, plot.lcas = TRUE)
 knitr::include_graphics("Fig3.png")
 ```
 
+6 - Assess the consistency of root placements.
+```{r, eval=FALSE}
+# Re-run permutation with nPermutations >= 1000
+gbr <- runPermutation(gbr, nPermutations=1000)
+
+# Plot Bridge stats
+plotBridgeStats(gbr)
+```
+
+
 # High-throughput inference
 
 This example shows how to assess all OGs annotated for *H. sapiens* in the
@@ -110,7 +121,9 @@ res <- getBridge(gbr, what="results")
 ```
 
 
-# Uncertainty of root placement
+# Simulating Random Orthologous Groups (ROGs)
+
+The `simulateRogs()` function generates random orthologous groups by modeling gain and loss events within a given 'phylo' tree object. The simulation starts by assigning a random root to each ROG. Following that, a vertical heritage is propagated through the tree, extending up to a designated reference species. The resulting structure is then subjected to random gain and loss events. The primary goal of this simulation is to assess the performance of the *Bridge* algorithm in predicting the random roots under different levels of variation from an ideal vertical heritage pattern. Next, we will assess 100 ROGs, comparing reference and predicted roots.
 
 ```{r, eval=FALSE}
 # Load caret (to assess classification performance)
@@ -120,32 +133,24 @@ library(caret)
 library(ape)
 phyloTree <- rtree(n=100)
 
-# Run 'simulateRogs' to simulate 100 random orthologous groups (ROGs)
+# Run 'simulateRogs' to simulate 100 ROGs
 gbr <- simulateRogs(phyloTree=phyloTree, n.rogs = 100, gain = 0.1, loss = 0.2)
 
 # Run Bridge to predict a root for each ROG
-gbr <- runBridge(gbr)
+gbr <- runBridge(gbr, penalty = 2)
 
+# Check confusion matrix
+plotBridgeSimulation(gbr)
+```
+
+```{r, eval=FALSE}
 # Get reference and predicted roots
 sim <- getBridge(gbr, what="simulation")
 
 # Check overall performance
 cm <- confusionMatrix(data = sim$prediction, reference = sim$reference)
 cm$overall["Accuracy"]
-
-# Check confusion matrix
-plotBridgeSimulation(gbr)
-
-# Assess consistency of root placements
-gbr <- runPermutation(gbr, nPermutations=1000)
-
-# Plot D-scores and associated P-values
-plotBridgeStats(gbr)
-# pdf(file = "root_uncertainty.pdf", width = 4, height = 4)
-# plot(gg1)
-# dev.off()
 ```
-
 
 # Runtime performance
 
