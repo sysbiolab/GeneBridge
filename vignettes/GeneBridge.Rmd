@@ -187,8 +187,8 @@ res <- getBridge(gbr, what="results")
 
 # Runtime performance
 
-```{r label='runtime', eval=FALSE}
-#--- Load ggplot
+```{r, eval=FALSE}
+#--- Load additional required packages
 library(ggplot2)
 library(ggthemes)
 library(egg)
@@ -201,7 +201,9 @@ data(ogdata)
 ogids <- unique(ogdata$og_id[ogdata$ssp_id=="9606"])
 length(ogids)
 # [1] 142
+```
 
+```{r, eval=FALSE}
 #--- Make a function to check runtime for different input sizes
 check.rooting.runtime <- function(n){
   ogids.subset <- ogids[1:n]
@@ -221,8 +223,11 @@ check.rooting.runtime <- function(n){
   return(rtime)
 }
 # check.rooting.runtime(n=5)
+```
 
-#--- Run check.rooting.runtime() for different input sizes (x3 iterations)
+```{r, eval=FALSE}
+#--- Run check.rooting.runtime() function for different input sizes 
+#--- (x3 iterations)
 input_size <- seq.int(10,length(ogids),10)
 iterations <- 1:3
 elapsed_lt <- lapply(iterations, function(i){
@@ -232,8 +237,10 @@ elapsed_lt <- lapply(iterations, function(i){
     check.rooting.runtime(n)
   })
 })
+```
 
-#--- Get 'preprocess' runtime
+```{r, eval=FALSE}
+#--- Get 'preprocess' runtime results
 runtime.preprocess <- sapply(elapsed_lt, function(lt){
   lt["runtime.preprocess",]
 })
@@ -241,7 +248,7 @@ runtime.preprocess <- data.frame(InputSize=input_size, runtime.preprocess)
 runtime.preprocess <- melt(as.data.table(runtime.preprocess), "InputSize")
 colnames(runtime.preprocess) <- c("Input.Size","Iteration","Elapsed.Time")
 
-#--- Get 'Bridge' runtime
+#--- Get 'bridge' runtime results
 runtime.bridge <- sapply(elapsed_lt, function(lt){
   lt["runtime.bridge",]
 })
@@ -249,15 +256,17 @@ runtime.bridge <- data.frame(InputSize=input_size, runtime.bridge)
 runtime.bridge <- melt(as.data.table(runtime.bridge), "InputSize")
 colnames(runtime.bridge) <- c("Input.Size","Iteration","Elapsed.Time")
 
-#--- Get 'Permutation' runtime
+#--- Get 'permutation' runtime results
 runtime.perm <- sapply(elapsed_lt, function(lt){
   lt["runtime.perm",]
 })
 runtime.perm <- data.frame(InputSize=input_size, runtime.perm)
 runtime.perm <- melt(as.data.table(runtime.perm), "InputSize")
 colnames(runtime.perm) <- c("Input.Size","Iteration","Elapsed.Time")
+```
 
-#--- Create ggplot objects with runtime results
+```{r, eval=FALSE}
+#--- Create 3 ggplot objects with runtime results
 cls <- c("#69b3a2",adjustcolor("#69b3a2", alpha=0.5))
 gg1 <- ggplot(runtime.preprocess, aes(x=Input.Size, y=Elapsed.Time)) +
   geom_smooth(method=loess, se=TRUE) +
