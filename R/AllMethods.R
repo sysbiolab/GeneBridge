@@ -193,7 +193,9 @@ setMethod(
         branchprobs <- .branchProbs(orthocount, penalty)
         
         #--- run Bridge
+        system.time(
         bridgeprobs <- .runBridge(spbranches, branchprobs, threshold)
+        )
         
         #--- update status
         gbr@branchprobs <- branchprobs

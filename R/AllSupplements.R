@@ -41,7 +41,9 @@
         pbranch <- branchprobs[i, ]
         pbridge <- vapply(seq_len(nroot), function(m){
             pr <- vapply(seq(m, nroot), function(n) {
-                mean(pbranch[seq(m, n)])
+                # mean(pbranch[seq.int(m, n)])
+                # faster than mean:
+                sum(pbranch[seq.int(m, n)])/(n - m + 1)
             }, numeric(1))
             max(pr)
         }, numeric(1))
