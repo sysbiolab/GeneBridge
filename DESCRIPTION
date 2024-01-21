@@ -1,7 +1,7 @@
 Package: GeneBridge
 Type: Package
 Title: Rooting Orthologous Genes in Large-Scale Evolutionary Analysis
-Version: 0.99.1
+Version: 0.99.2
 Authors@R: 
     c(person("Leonardo", "Campos", role = "ctb"),
       person("Rodrigo", "Dalmolin", role = "ctb"),
