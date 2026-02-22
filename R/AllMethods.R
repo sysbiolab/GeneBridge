@@ -4,11 +4,12 @@
 #'
 #' @description \code{Bridge} is a constructor of Bridge-class objects.
 #'
-#' @param ogdata A data frame with COG data.
-#' @param phyloTree Object of class \code{phylo}.
+#' @param ogdata A data frame of orthologous group (OG) data.
+#' @param phyloTree Object of class \code{phylo}. All species listed in 
+#' \code{ogdata} must be included in \code{phyloTree}.
 #' @param refsp A single string or integer specifying the reference species 
-#' to be used in the Bridge algorithm. The \code{refsp} must be listed in 
-#' the \code{tip.label} of the \code{phylo} object.
+#' to be used in the Bridge algorithm. The value must be listed in 
+#' \code{phyloTree$tip.label}.
 #' @param ogids An optional character vector listing which OGs should be  
 #' evaluated by the Bridge algorithm.
 #' @param verbose A single logical value specifying to display detailed 
@@ -18,10 +19,10 @@
 #' @seealso \code{\link{runBridge}}
 #' @examples
 #' # Load datasets used for demonstration
-#' data(ogdata)
+#' data(gene_bridge_data)
 #'
 #' # Create an object of class 'Bridge' for H. sapiens
-#' gbr <- newBridge(ogdata, phyloTree, refsp="9606", ogids=ogids)
+#' gbr <- newBridge(gene_bridge_data$ogdata, gene_bridge_data$phyloTree, refsp="9606")
 #' 
 #' @importFrom utils txtProgressBar setTxtProgressBar
 #' @importFrom stats pnorm aggregate ecdf p.adjust sd uniroot reorder
@@ -149,10 +150,10 @@ newBridge <- function(ogdata, phyloTree, refsp, ogids = NULL,
 #' @seealso \code{\link{newBridge}}
 #' @examples
 #' # Load datasets used for demonstration
-#' data(ogdata)
+#' data(gene_bridge_data)
 #'
 #' # Create an object of class 'Bridge' for H. sapiens
-#' gbr <- newBridge(ogdata, phyloTree, refsp="9606", ogids=ogids)
+#' gbr <- newBridge(gene_bridge_data$ogdata, gene_bridge_data$phyloTree, refsp="9606")
 #' 
 #' # Run the Bridge algorithm
 #' gbr <- runBridge(gbr)
@@ -234,10 +235,10 @@ setMethod(
 #' @seealso \code{\link{newBridge}}
 #' @examples
 #' # Load datasets used for demonstration
-#' data(ogdata)
+#' data(gene_bridge_data)
 #'
 #' # Create an object of class 'Bridge' for H. sapiens
-#' gbr <- newBridge(ogdata, phyloTree, refsp="9606", ogids=ogids)
+#' gbr <- newBridge(gene_bridge_data$ogdata, gene_bridge_data$phyloTree, refsp="9606")
 #' 
 #' # Run the Bridge algorithm
 #' gbr <- runBridge(gbr)
@@ -322,10 +323,10 @@ setMethod(
 #' @return Content from slots in the \linkS4class{Bridge} object.
 #' @examples
 #' # Load datasets used for demonstration
-#' data(ogdata)
+#' data(gene_bridge_data)
 #'
 #' # Create an object of class 'Bridge' for H. sapiens
-#' gbr <- newBridge(ogdata, phyloTree, refsp="9606", ogids=ogids)
+#' gbr <- newBridge(gene_bridge_data$ogdata, gene_bridge_data$phyloTree, refsp="9606")
 #'
 #' # Get the 'status' slot in gbr
 #' getBridge(gbr, what = 'status')

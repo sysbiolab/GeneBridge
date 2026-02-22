@@ -41,10 +41,10 @@ root against a null distribution obtained by permutation analysis.
 }
 \examples{
 # Load datasets used for demonstration
-data(ogdata)
+data(gene_bridge_data)
 
 # Create an object of class 'Bridge' for H. sapiens
-gbr <- newBridge(ogdata, phyloTree, refsp="9606", ogids=ogids)
+gbr <- newBridge(gene_bridge_data$ogdata, gene_bridge_data$phyloTree, refsp="9606")
 
 # Run the Bridge algorithm
 gbr <- runBridge(gbr)

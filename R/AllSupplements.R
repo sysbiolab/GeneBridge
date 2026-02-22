@@ -125,14 +125,14 @@
             .getAdjDscore(rspace = sample(rootspace[i, ]))
         }, numeric(1))
     }
-    # compute null
+    # compute null nogs
     if (.isParallel()) {
         cl <- getOption("cluster")
         clusterExport(cl=cl, envir = environment(),
-            list=list(".nullDscore", "rootspace", ".getAdjDscore"))
+            list=list(".nullDscore", "rootspace", ".getAdjDscore", "nogs"))
         nulldist <- parSapply(cl, seq_len(nPermutations), function(i) {
             .nullDscore(rootspace)
-        }, simplify = FALSE)
+        })
     } else {
         if (verbose) pb <- txtProgressBar(style = 3)
         nulldist <- vapply(seq_len(nPermutations), function(i) {

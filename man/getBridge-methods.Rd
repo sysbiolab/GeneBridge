@@ -25,10 +25,10 @@ individual slots available in a Bridge object.
 }
 \examples{
 # Load datasets used for demonstration
-data(ogdata)
+data(gene_bridge_data)
 
 # Create an object of class 'Bridge' for H. sapiens
-gbr <- newBridge(ogdata, phyloTree, refsp="9606", ogids=ogids)
+gbr <- newBridge(gene_bridge_data$ogdata, gene_bridge_data$phyloTree, refsp="9606")
 
 # Get the 'status' slot in gbr
 getBridge(gbr, what = 'status')

@@ -63,7 +63,7 @@ setMethod("plotBridgeSimulation", "Bridge",
     ggp <-  ggplot(data = cm_d, aes(x = Prediction , 
         y =  Reference, fill = Freq)) +
         geom_tile() + scale_x_discrete(position = "top") +
-        scale_fill_gradient2(guide = FALSE , 
+        scale_fill_gradient2(guide = "none" , 
             low="grey97", mid = "#56B1F7", high = "#132B43",
             midpoint = 50, na.value = 'grey97') +
         geom_text(aes(label = Counts, colour=Freq), size = 2.8) + 
@@ -97,10 +97,10 @@ setMethod("plotBridgeSimulation", "Bridge",
 #' @return A ggplot object.
 #' @examples
 #' # Load datasets used for demonstration
-#' data(ogdata)
+#' data(gene_bridge_data)
 #'
 #' # Create an object of class 'Bridge' for H. sapiens
-#' gbr <- newBridge(ogdata, phyloTree, refsp="9606", ogids=ogids)
+#' gbr <- newBridge(gene_bridge_data$ogdata, gene_bridge_data$phyloTree, refsp="9606")
 #'
 #' # Run the Bridge algorithm
 #' gbr <- runBridge(gbr)
@@ -258,10 +258,10 @@ p.threshold <- function (pvals, alpha=0.05, method="BH") {
 #' @return Either a graphics or a pdf file.
 #' @examples
 #' # Load datasets used for demonstration
-#' data(ogdata)
+#' data(gene_bridge_data)
 #'
 #' # Create an object of class 'Bridge' for H. sapiens
-#' gbr <- newBridge(ogdata, phyloTree, refsp="9606", ogids=ogids)
+#' gbr <- newBridge(gene_bridge_data$ogdata, gene_bridge_data$phyloTree, refsp="9606")
 #'
 #' # Run the Bridge algorithm
 #' gbr <- runBridge(gbr)

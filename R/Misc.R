@@ -354,7 +354,7 @@ symmetricBranching <- function(n.branches = 10, n.tips = seq(1, n.branches)){
 #> [1] '_PACKAGE'
 
 ################################################################################
-### Documentation for 'ogdata'
+### Documentation for 'gene_bridge_data'
 ################################################################################
 #' @title A pre-processed dataset for the GeneBridge package
 #'
@@ -362,14 +362,14 @@ symmetricBranching <- function(n.branches = 10, n.tips = seq(1, n.branches)){
 #'
 #' @format A data frame containing orthologous groups (OGs).
 #'
-#' @usage data(ogdata)
+#' @usage data(gene_bridge_data)
 #'
 #' @source This package.
 #' 
 #' @details
 #' 
-#' The dataset consists of 4 R objects to be used for demonstration purposes 
-#' in the geneplast vignette.
+#' The list with 4 R objects to be used for demonstration purposes 
+#' in the GeneBridge vignette.
 #' 
 #' \describe{
 #' 
@@ -402,11 +402,10 @@ symmetricBranching <- function(n.branches = 10, n.tips = seq(1, n.branches)){
 #' 41(Database issue):D808-15, 2013. doi:10.1093/nar/gks1094.
 #' 
 #' @docType data
-#' @keywords ogdata
-#' @name ogdata
-#' @aliases ogdata
+#' @keywords gene_bridge_data
+#' @name gene_bridge_data
 #' @return A pre-processed dataset.
 #' @examples
-#' data(ogdata)
+#' data(gene_bridge_data)
 NULL
 

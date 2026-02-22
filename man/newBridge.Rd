@@ -7,13 +7,14 @@
 newBridge(ogdata, phyloTree, refsp, ogids = NULL, verbose = TRUE)
 }
 \arguments{
-\item{ogdata}{A data frame with COG data.}
+\item{ogdata}{A data frame of orthologous group (OG) data.}
 
-\item{phyloTree}{Object of class \code{phylo}.}
+\item{phyloTree}{Object of class \code{phylo}. All species listed in 
+\code{ogdata} must be included in \code{phyloTree}.}
 
 \item{refsp}{A single string or integer specifying the reference species 
-to be used in the Bridge algorithm. The \code{refsp} must be listed in 
-the \code{tip.label} of the \code{phylo} object.}
+to be used in the Bridge algorithm. The value must be listed in 
+\code{phyloTree$tip.label}.}
 
 \item{ogids}{An optional character vector listing which OGs should be
 evaluated by the Bridge algorithm.}
@@ -29,10 +30,10 @@ A preprocessed \linkS4class{Bridge} class object.
 }
 \examples{
 # Load datasets used for demonstration
-data(ogdata)
+data(gene_bridge_data)
 
 # Create an object of class 'Bridge' for H. sapiens
-gbr <- newBridge(ogdata, phyloTree, refsp="9606", ogids=ogids)
+gbr <- newBridge(gene_bridge_data$ogdata, gene_bridge_data$phyloTree, refsp="9606")
 
 }
 \seealso{

@@ -38,16 +38,21 @@ from the menu.
 Useful links:
 \itemize{
   \item \url{https://github.com/sysbiolab/GeneBridge}
+  \item Report bugs at \url{https://github.com/sysbiolab/GeneBridge/issues}
 }
 
 }
 \author{
 \strong{Maintainer}: Mauro Castro \email{mauro.a.castro@gmail.com} (\href{https://orcid.org/0000-0003-4942-8131}{ORCID})
 
+Authors:
+\itemize{
+  \item Rodrigo Dalmolin
+}
+
 Other contributors:
 \itemize{
   \item Leonardo Campos [contributor]
-  \item Rodrigo Dalmolin [contributor]
 }
 
 }

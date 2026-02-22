@@ -1,8 +1,13 @@
-citEntry(entry = "Manual",
-  author = "Dalmolin, Rodrigo JS  and Castro, Mauro AA",
-  title = "Geneplast: evolutionary rooting and plasticity inference",
-  year = "2015",
-  note = "R package",
-  textVersion = "Dalmolin RJS, Castro MAA. Geneplast: evolutionary rooting and plasticity inference. R package, 2015."
+bibentry(bibtype = "Article",
+author = "Leonardo R S Campos and Sheyla Trefflich and Diego A A Morais and Danilo O Imparato and Vinicius S Chagas and Ricardo D’Oliveira Albanus and Rodrigo J S Dalmolin and Mauro A A Castro",
+title = "Bridge: A New Algorithm for Rooting Orthologous Genes in Large-Scale Evolutionary Analyses",
+journal = "Molecular Biology and Evolution",
+year = "2024",
+volume = "41",
+number = "2",
+pages = "msae019",
+doi = "10.1093/molbev/msae019",
+textVersion = paste("Campos LRS, Trefflich S, Morais DAA, et al.", 
+"Bridge: A New Algorithm for Rooting Orthologous Genes in Large-Scale Evolutionary Analyses.",
+"Molecular Biology and Evolution 41(2):msae019, 2024. doi: 10.1093/molbev/msae019", sep=" ")
 )
-
