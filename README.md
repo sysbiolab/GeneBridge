@@ -33,7 +33,7 @@ vignette("GeneBridge")
 
 If you use *GeneBridge*, please cite:
 
-* Campos et al. *et al.* Bridge: A New Algorithm for Rooting Orthologous Genes in Large-Scale Evolutionary Analyses. *Molecular Biology and Evolution* 41(2):msae019, 2024. https://doi.org/10.1093/molbev/msae019
+* Campos *et al.* Bridge: A New Algorithm for Rooting Orthologous Genes in Large-Scale Evolutionary Analyses. *Molecular Biology and Evolution* 41(2):msae019, 2024. https://doi.org/10.1093/molbev/msae019
 
 ### Licenses
 
