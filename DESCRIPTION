@@ -10,10 +10,9 @@ Authors@R:
               comment = c(ORCID = "0000-0003-4942-8131")))
 Depends: R (>= 4.3), methods
 Imports: grDevices, graphics, utils, stats, ape, data.table, snow, ggplot2, ggrepel
-Suggests: RUnit, BiocGenerics, BiocStyle, knitr, rmarkdown, ggthemes, egg, caret
+Suggests: knitr, rmarkdown, testthat, ggthemes, egg, caret
 Description: GeneBridge provides tools for inferring the evolutionary roots of genes across multiple species. It implements the Bridge algorithm to identify the most likely rooting of genes within a given species tree. By rooting orthologous genes in large-scale evolutionary snalysis, GeneBridge can provide a framework for exploring evolutionary roots within biological systems.
 License: Artistic-2.0
-biocViews: Genetics, GeneRegulation, SystemsBiology
 VignetteBuilder: knitr
 URL: https://github.com/sysbiolab/GeneBridge
 BugReports: https://github.com/sysbiolab/GeneBridge/issues

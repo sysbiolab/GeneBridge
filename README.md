@@ -1,6 +1,9 @@
 ### GeneBridge: Rooting Orthologous Genes in Large-Scale Evolutionary Analysis.
-
-*GeneBridge* is an *R* package designed to assess the evolutionary history of genes across species. It implements the Bridge algorithm to infer the evolutionary root of genes in a given species tree. By rooting orthologous genes in large-scale evolutionary snalysis, *GeneBridge* can provide a framework for exploring evolutionary roots within biological systems.
+  <!-- badges: start -->
+  [![](https://img.shields.io/badge/lifecycle-stable-brightgreen.svg)](https://lifecycle.r-lib.org/articles/stages.html#stable)
+  [![](https://img.shields.io/badge/license-Artistic--2.0-blue.svg)](https://cran.r-project.org/web/licenses/Artistic-2.0)
+  <!-- badges: end -->
+*GeneBridge* is an *R* package designed to assess the evolutionary history of genes across species. It implements the Bridge algorithm to infer the evolutionary root of genes in a given species tree (![GeneBridge workflow](figures/intro.png)). By rooting orthologous genes in large-scale evolutionary snalysis, *GeneBridge* can provide a framework for exploring evolutionary roots within biological systems.
 
 ### Installation in R (>=4.3)
 
@@ -9,8 +12,6 @@
 ```r
 install.packages("knitr")
 install.packages("rmarkdown")
-install.packages("BiocManager")
-BiocManager::install("BiocStyle")
 ```
 
 ##### Install the GeneBridge package

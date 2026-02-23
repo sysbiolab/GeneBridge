@@ -4,9 +4,9 @@ author: "Leonardo Campos, Rodrigo Dalmolin, Mauro Castro."
 date: "`r Sys.Date()`"
 bibliography: bibliography.bib
 abstract: "<p>*GeneBridge* provides tools for inferring the evolutionary roots of genes across multiple species. It implements the Bridge algorithm to identify the most likely rooting of genes within a given species tree. By rooting orthologous genes in large-scale evolutionary snalysis, *GeneBridge* can provide a framework for exploring evolutionary roots within biological systems.</p>"
-package: "`r BiocStyle::pkg_ver('GeneBridge')`"
 output: 
-  BiocStyle::html_document:
+  html_document:
+    theme: cerulean
     self_contained: yes
     toc: true
     toc_float: true
@@ -18,6 +18,13 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
+**Package**: GeneBridge `r packageVersion('GeneBridge')`
+
+# Highlights
+* Implements the Bridge algorithm for evolutionary root inference
+* Quantifies rooting stability through empirical permutation testing
+* Provides a framework for system-level evolutionary analysis
+
 # Overview
 
 In order to interrogate the evolutionary root of a given gene, *GeneBridge* implements the *Bridge* algorithm [@Campos2024], which assesses the probability that an ortholog is present in each Last Common Ancestor (LCA) of a species in a given species tree. The method is designed to deal with large-scale queries in order to interrogate, for example, all genes annotated in a network (please refer to @Campos2024 and @Castro2008 for additional examples).
@@ -25,7 +32,7 @@ In order to interrogate the evolutionary root of a given gene, *GeneBridge* impl
 To illustrate the rooting inference consider the evolutionary scenarios presented in **Figure 1** for two hypothetical orthologous groups (OGs). These OGs comprise a number of orthologous genes distributed among 13 species, and the pattern of presence or absence is indicated by green and grey colours, respectively. Observe that in **Figure 1a** at least one ortholog is present in all extant species. To explain this common genetic trait, a possible evolutionary scenario could assume that the ortholog was present in the LCA of all extant species and was genetically transmitted up to the descendants. For this scenario, the evolutionary root might be placed at the bottom of the species tree (i.e. node *j*). A similar interpretation could be done for the hypothetical OG in **Figure 1b**, but with the evolutionary root placed at node *f*. The *Bridge* algorithm infers the most consistent rooting scenario for the observed orthologs in a given species tree, computing a consistency score called *Dscore* and an associated empirical *p-value*. The *Dscore* is an estimate of the stability of the inferred roots and the empirical *p-value* is computed by permutation analysis.
 
 ```{r fig1, echo=FALSE, fig.cap="Evolutionary rooting scenarios for two hypothetical orthologous genes in a given species tree. (**a**) Hypothetical OG observed in all species of the tree, without apparent deletions or duplications. (**b**) Hypothetical OG observed in many species, but not all. Numbers in parentheses represent the orthologous genes in each species. Red circles indicate the evolutionary roots that best explain the observed orthologs in the species tree.", out.width = '90%'}
-knitr::include_graphics("Fig1.png")
+knitr::include_graphics("figures/Fig1.png")
 ```
 
 
@@ -75,7 +82,7 @@ plotBridgeTree(gbr, whichOG="NOG40170")
 ```
 
 ```{r fig2, echo=FALSE, fig.cap="Inferred evolutionary rooting scenario for NOG40170. Monophyletic groups are ordered to show all branches of the tree below the queried species in the analysis.", out.width = '50%'}
-knitr::include_graphics("Fig2.png")
+knitr::include_graphics("figures/Fig2.png")
 ```
 
 6 - Visualize the LCAs of the reference species in the analysis.
@@ -84,7 +91,7 @@ plotBridgeTree(gbr, plot.lcas = TRUE)
 ```
 
 ```{r fig3, echo=FALSE, fig.cap="LCAs of the reference species in the analysis.", out.width = '50%'}
-knitr::include_graphics("Fig3.png")
+knitr::include_graphics("figures/Fig3.png")
 ```
 
 7 - Check the consistency of root placements.
@@ -94,7 +101,7 @@ plotBridgeStats(gbr)
 ```
 
 ```{r fig4, echo=FALSE, fig.cap="Uncertainty of root placement. Each data point displays a consistency score (D) along with the associated P-value (on a -log10 scale) calculated for an OG. A low P-value (green circles) indicates that the predicted root is supported by a phyletic pattern in the data.", out.width = '80%'}
-knitr::include_graphics("Fig4.png")
+knitr::include_graphics("figures/Fig4.png")
 ```
 
 
@@ -130,7 +137,7 @@ plotBridgeSimulation(gbr)
 ```
 
 ```{r fig5, echo=FALSE, fig.cap="Performance of the bridge algorithm to predict roots for 300 simulated random orthologous groups (ROGs).", out.width = '100%'}
-knitr::include_graphics("Fig5.png")
+knitr::include_graphics("figures/Fig5.png")
 ```
 
 ```{r, eval=FALSE, include=FALSE}
@@ -161,7 +168,7 @@ cm$byClass[,"Balanced Accuracy"]
 # High-throughput inference
 
 This example shows how to assess all OGs annotated for *H. sapiens* in the
-`r BiocStyle::Biocpkg("geneplast.data.string.v91")` package.
+`geneplast.data.string.v91` package.
 
 1 - Load orthogy data from the *geneplast.data.string.v91* package.
 
@@ -306,7 +313,7 @@ grid.arrange(gg1, gg2, gg3, nrow = 1)
 ```
 
 ```{r fig6, echo=FALSE, fig.cap="Runtime performance of the rooting pipeline. Each point indicate the elapsed time to evaluate the 'check.rooting.runtime()' function, which assesses the execution time of the *newBridge()*, *runBridge()*, and *runPermutation()* functions separatelly.", out.width = '100%'}
-knitr::include_graphics("Fig6.png")
+knitr::include_graphics("figures/Fig6.png")
 ```
 
 ```{r, eval=FALSE, include=FALSE}
@@ -317,7 +324,7 @@ knitr::include_graphics("Fig6.png")
 
 # Orthology data packages
 
-The `r BiocStyle::Biocpkg("geneplast.data")` package provides supporting data via `r BiocStyle::Biocpkg("AnnotationHub")` for the *GeneBridge* evolutionary analyses. The `r BiocStyle::Biocpkg("geneplast.data")` package contains pre-processed data from different OG databases for use in the *GeneBridge* package. In the current version, `r BiocStyle::Biocpkg("geneplast.data")` provides orthology information from STRING (https://string-db.org/), OMA Browser (http://omabrowser.org/oma/home/), and OrthoDB (https://www.orthodb.org/). 
+The *[geneplast.data](https://www.bioconductor.org/packages/geneplast.data/)* package provides supporting data via *[AnnotationHub](https://www.bioconductor.org/packages/AnnotationHub/)* for the *GeneBridge* evolutionary analyses. The *geneplast.data* package contains pre-processed data from different OG databases for use in the *GeneBridge* package. In the current version, *geneplast.data* provides orthology information from *[STRING](https://string-db.org/)*, *[OMA Browser](http://omabrowser.org/oma/home/)*, and *[OrthoDB](https://www.orthodb.org/)*. 
 
 # Citation
 
