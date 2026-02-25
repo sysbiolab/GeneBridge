@@ -5,7 +5,7 @@
   [![DOI](https://img.shields.io/badge/DOI-10.1093%2Fmolbev%2Fmsae019-blue.svg)](https://doi.org/10.1093/molbev/msae019)
   <!-- badges: end -->
 ![GeneBridge workflow](vignettes/figures/intro.png)
-*GeneBridge* is an *R* package that implements the Bridge algorithm to infer the evolutionary root of genes in a given species tree. By rooting orthologous genes in large-scale evolutionary snalysis, *GeneBridge* provides a framework for exploring evolutionary roots within biological systems.
+*GeneBridge* is an *R* package that implements the Bridge algorithm to infer the evolutionary root of genes in a given species tree. By rooting orthologous genes in large-scale evolutionary snalysis, *GeneBridge* provides a framework for exploring the evolutionary roots of biological systems.
 ### Installation in R (>=4.3)
 
 ##### Install dependencies to build the package's vignettes
