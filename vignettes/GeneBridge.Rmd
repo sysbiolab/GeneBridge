@@ -3,7 +3,7 @@ title: "GeneBridge: Rooting Orthologous Genes in Large-Scale Evolutionary Analys
 author: "Leonardo Campos, Rodrigo Dalmolin, Mauro Castro."
 date: "`r Sys.Date()`"
 bibliography: bibliography.bib
-abstract: "<p>*GeneBridge* provides tools for inferring the evolutionary roots of genes across multiple species. It implements the Bridge algorithm to identify the most likely rooting of genes within a given species tree. By rooting orthologous genes in large-scale evolutionary snalysis, *GeneBridge* can provide a framework for exploring evolutionary roots within biological systems.</p>"
+abstract: "<p>*GeneBridge* provides tools for inferring the evolutionary roots of genes. It implements the Bridge algorithm to identify the most likely gene root based on the distribution of orthologs in a species tree. By rooting orthologous genes in large-scale evolutionary snalysis, *GeneBridge* provides a framework for exploring the evolutionary history of biological systems.</p>"
 output: 
   html_document:
     theme: cerulean
